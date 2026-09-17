@@ -1,0 +1,58 @@
+services:
+  # 1. Base de Datos Espacial PostgreSQL 16 con PostGIS
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: agrochain-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: agrochain
+    ports:
+      - "5432:5432"
+    volumes:
+      - agrochain_pgdata:/var/lib/postgresql/data
+      - ./backend/sql/01_schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ./backend/sql/02_seed.sql:/docker-entrypoint-initdb.d/02_seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d agrochain"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. Servidor Backend REST API (Node.js 22 + TypeScript + N-Capas)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: agrochain-backend
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgrespassword
+      DB_NAME: agrochain
+      JWT_SECRET: agrochain-super-secret-production-key-2026
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # 3. Portal Web SPA (React 18 + Bootstrap 5 + Leaflet + Vite)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: agrochain-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
+volumes:
+  agrochain_pgdata:
+    driver: local
