@@ -22,28 +22,16 @@ docker compose up --build
 
 ---
 
-## Despliegue en la Nube (Microsoft Azure)
+## Despliegue en la Nube
 
-El sistema se encuentra desplegado y operativo en una Máquina Virtual en **Microsoft Azure**:
+El sistema se encuentra desplegado y operativo con certificado SSL:
 
 * **Portal Web (HTTPS Seguro):** [https://agrochain.westus2.cloudapp.azure.com](https://agrochain.westus2.cloudapp.azure.com)
 * **API REST Health Check:** [https://agrochain.westus2.cloudapp.azure.com/api/v1/health](https://agrochain.westus2.cloudapp.azure.com/api/v1/health)
-* **IP Pública:** `20.51.105.80`
 
-### Acceso y Administración SSH
-Para administrar los servicios en la máquina virtual:
-```bash
-ssh -i SSH_umg.pem azureuser@20.51.105.80
-```
-
-### Configuración de Red y Seguridad
-* **Puerto 80 (HTTP):** Abierto en Azure NSG. Nginx redirige automáticamente todo el tráfico con estado `301` hacia HTTPS.
-* **Puerto 443 (HTTPS):** Certificado SSL válido emitido por **Let's Encrypt** (ECDSA). Nginx opera como Reverse Proxy sirviendo el Frontend SPA y derivando internamente `/api/` hacia el contenedor del Backend en `backend:3000`.
-* **Puerto 22 (SSH):** Acceso seguro para administración de la instancia mediante llave privada PEM.
-* **Túnel SSH Alternativo (para pruebas locales):**
-  ```bash
-  ssh -i SSH_umg.pem -L 5173:localhost:80 -L 3000:localhost:3000 azureuser@20.51.105.80
-  ```
+### Arquitectura de Red y Seguridad
+* **Puerto 80 (HTTP):** Redirección automática permanente (`301 Moved Permanently`) hacia HTTPS.
+* **Puerto 443 (HTTPS):** Cifrado SSL/TLS activo mediante certificado Let's Encrypt (ECDSA). Nginx opera como Reverse Proxy seguro sirviendo el Frontend SPA y enrutando peticiones `/api/` directamente al contenedor Backend.
 
 ---
 
